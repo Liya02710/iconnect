@@ -16,7 +16,7 @@ import { formatRelativeTime } from "../utils/time";
 
 type MediaItem = {
   url: string;
-  type: "image" | "file";
+  type: "image" | "file" | "voice";
   name?: string;
   size?: number;
 };
@@ -403,6 +403,86 @@ export default function Message({
     setShowAttachMenu(false);
   };
 
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<number | null>(null);
+
+  const startRecording = async () => {
+    setShowAttachMenu(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      const recorder = new MediaRecorder(stream);
+      recordChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(recordChunksRef.current, {
+          type: "audio/webm",
+        });
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string;
+          if (dataUrl) {
+            setPendingMedia({
+              url: dataUrl,
+              type: "voice",
+              name: `voice-${Date.now()}.webm`,
+              size: blob.size,
+            });
+          }
+          // Stop all tracks so the mic indicator turns off
+          stream.getTracks().forEach((t) => t.stop());
+        };
+        reader.readAsDataURL(blob);
+        if (recordTimerRef.current) {
+          clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        setIsRecording(false);
+        setRecordSeconds(0);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordSeconds((s) => s + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+      alert("Please allow microphone access to record voice messages.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      // Discard data and stop
+      recordChunksRef.current = [];
+      mediaRecorderRef.current.onstop = null as any;
+      if (mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+    }
+    setIsRecording(false);
+    setRecordSeconds(0);
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+  };
+
   const removePending = () => setPendingMedia(null);
 
   // ===== Chat detail view =====
@@ -657,6 +737,73 @@ export default function Message({
         )}
 
         {/* Pending media preview */}
+        {/* Recording banner */}
+        {isRecording && (
+          <div
+            className="liquid-card flex items-center justify-between rounded-2xl px-4 py-3"
+            style={{ margin: "0 12px", borderColor: "rgba(255,93,93,0.4)" }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{
+                  background: "#ff5d5d",
+                  boxShadow: "0 0 12px #ff5d5d",
+                  animation: "pulseGlow 1s ease-in-out infinite",
+                }}
+              />
+              <span className="text-sm font-semibold text-white">
+                Recording…
+              </span>
+              <span
+                className="text-xs"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
+                {Math.floor(recordSeconds / 60)
+                  .toString()
+                  .padStart(2, "0")}
+                :
+                {(recordSeconds % 60).toString().padStart(2, "0")}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={cancelRecording}
+                className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20"
+                aria-label="Cancel"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  className="h-4 w-4"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <button
+                onClick={stopRecording}
+                className="grid h-9 w-9 place-items-center rounded-full text-black transition active:scale-95"
+                style={{
+                  background: "#ff5d5d",
+                  boxShadow: "0 0 12px rgba(255,93,93,0.4)",
+                }}
+                aria-label="Stop recording"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                >
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {pendingMedia && (
           <div style={{ margin: "0 12px" }}>
             <PendingMediaPreview
@@ -1253,6 +1400,26 @@ function AttachMenu({
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
                 <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            }
+          />
+          <AttachButton
+            label="Voice"
+            onClick={startRecording}
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
               </svg>
             }
           />
