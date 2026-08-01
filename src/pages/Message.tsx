@@ -820,6 +820,7 @@ export default function Message({
               onCamera={handleCamera}
               onGallery={handleGallery}
               onDocument={handleDocument}
+              onVoice={startRecording}
               onClose={() => setShowAttachMenu(false)}
             />
           </div>
@@ -1054,6 +1055,98 @@ export default function Message({
 }
 
 // ===== Message bubble =====
+// Voice message bubble with inline audio player
+function VoiceBubble({
+  media,
+  mine,
+}: {
+  media: MediaItem;
+  mine: boolean;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch((e) => console.error("Audio play failed:", e));
+    } else {
+      audio.pause();
+    }
+  };
+
+  const formatTime = (s: number) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="flex min-w-[200px] items-center gap-3 p-3">
+      <button
+        onClick={togglePlay}
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full transition active:scale-90"
+        style={{
+          background: mine ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.18)",
+          color: mine ? "#000" : "#fff",
+        }}
+        aria-label={isPlaying ? "Pause" : "Play"}
+      >
+        {isPlaying ? (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 ml-0.5">
+            <path d="M5 3l14 9-14 9V3z" />
+          </svg>
+        )}
+      </button>
+      <div className="min-w-0 flex-1">
+        <div
+          className="h-1 w-full overflow-hidden rounded-full"
+          style={{ background: mine ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${duration > 0 ? (progress / duration) * 100 : 0}%`,
+              background: mine ? "#000" : "#77ff33",
+            }}
+          />
+        </div>
+        <div
+          className="mt-1 flex items-center justify-between text-[11px]"
+          style={{ color: mine ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}
+        >
+          <span>Voice message</span>
+          <span>{formatTime(duration > 0 ? progress : 0)} / {formatTime(duration)}</span>
+        </div>
+        <audio
+          ref={audioRef}
+          src={media.url}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => {
+            setIsPlaying(false);
+            setProgress(0);
+          }}
+          onTimeUpdate={(e) => setProgress((e.target as HTMLAudioElement).currentTime)}
+          onLoadedMetadata={(e) =>
+            setDuration((e.target as HTMLAudioElement).duration)
+          }
+          preload="metadata"
+        />
+      </div>
+    </div>
+  );
+}
+
 function MessageBubble({
   message,
   onPreview,
@@ -1192,6 +1285,12 @@ function MessageBubble({
             </button>
           </div>
         )}
+        {message.media && message.media.type === "voice" && (
+          <VoiceBubble
+            media={message.media}
+            mine={mine}
+          />
+        )}
         {message.text && (
           <div className="px-3 pb-2 pt-1.5">
             <p>{message.text}</p>
@@ -1328,11 +1427,13 @@ function AttachMenu({
   onCamera,
   onGallery,
   onDocument,
+  onVoice,
   onClose,
 }: {
   onCamera: () => void;
   onGallery: () => void;
   onDocument: () => void;
+  onVoice: () => void;
   onClose: () => void;
 }) {
   return (
@@ -1346,7 +1447,7 @@ function AttachMenu({
         className="liquid-card relative z-20 mt-3 rounded-2xl p-2 fade-in"
         style={{ animation: "slideUp 0.25s ease-out" }}
       >
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <AttachButton
             label="Camera"
             onClick={onCamera}
@@ -1405,7 +1506,7 @@ function AttachMenu({
           />
           <AttachButton
             label="Voice"
-            onClick={startRecording}
+            onClick={onVoice}
             icon={
               <svg
                 viewBox="0 0 24 24"
