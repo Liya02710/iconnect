@@ -197,29 +197,8 @@ export default function Transaction({
         </div>
       </div>
 
-      {/* Two action buttons - admin only */}
-      {!isAdmin ? (
-        <div className="liquid-card rounded-3xl p-5 text-center">
-          <div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-white/5">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-5 w-5 text-white/40"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <p className="text-sm font-semibold text-white">Admins only</p>
-          <p className="mt-1 text-[11px] text-white/50">
-            Only admins can add money in or out.
-          </p>
-        </div>
-      ) : (
+      {/* Two action buttons - admin only (clients can still see balance + history below) */}
+      {isAdmin && (
         <div className="grid grid-cols-2 gap-3">
           <button
           onClick={() => setShowIncoming(true)}
@@ -269,10 +248,15 @@ export default function Transaction({
         </div>
       )}
 
-      {/* Transaction list */}
+      {/* Transaction list — visible to everyone */}
       <div className="liquid-card overflow-hidden rounded-3xl">
-        <div className="border-b border-white/5 px-4 py-3">
-          <p className="text-xs uppercase tracking-widest text-white/40">Recent</p>
+        <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+          <p className="text-xs uppercase tracking-widest text-white/40">
+            Recent
+          </p>
+          {!isAdmin && (
+            <p className="text-[10px] text-white/40">View only</p>
+          )}
         </div>
         {loadingRecords ? (
           <div className="px-4 py-8 text-center text-sm text-white/50">
