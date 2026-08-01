@@ -21,7 +21,7 @@ export default function Transaction({
       setCurrentUserId(stored);
       setLoadingRecords(true);
       api
-        .listTransactions(stored)
+        .listTransactions()
         .then((txs) => setRecords(txs as UiTransaction[]))
         .catch((err) => console.error("Load transactions error:", err))
         .finally(() => setLoadingRecords(false));
