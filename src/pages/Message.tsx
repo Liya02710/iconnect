@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import type { User } from "../types/user";
 import { api, type UiMessage } from "../lib/api";
 import { supabase } from "../lib/supabase";
+import { formatRelativeTime } from "../utils/time";
 
 type MediaItem = {
   url: string;
@@ -510,7 +511,7 @@ export default function Message({
               <span>
                 {conv.user.active
                   ? `Online · @${conv.user.username}`
-                  : `Offline · @${conv.user.username}`}
+                  : `Last seen ${formatRelativeTime(conv.user.lastActive)} · @${conv.user.username}`}
               </span>
             </p>
           </div>
