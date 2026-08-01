@@ -1,0 +1,76 @@
+# ICONNECT — Project configuration
+# Format: TOML (https://toml.io)
+
+[project]
+name = "iconnect"
+version = "1.0.0"
+description = "ICONNECT — a digital wallet and chat app"
+authors = ["ICONNECT Team"]
+license = "MIT"
+type = "web-app"
+
+[project.runtime]
+node = ">=18.0.0"
+package_manager = "npm"
+
+[project.stack]
+framework = "React"
+build_tool = "Vite"
+language = "TypeScript"
+styling = "Tailwind CSS"
+database = "Supabase (PostgreSQL)"
+auth = "Supabase Auth"
+storage = "Supabase Storage"
+realtime = "Supabase Realtime (Postgres Changes)"
+
+[project.scripts]
+dev = "vite"
+build = "tsc -b && vite build"
+preview = "vite preview"
+lint = "tsc --noEmit"
+
+[project.environment]
+# Copy to .env.local and fill in your real Supabase credentials
+supabase_url_placeholder = "https://<project>.supabase.co"
+supabase_anon_key_placeholder = "<anon-public-key>"
+
+[features]
+login = true
+signup_via_settings = true
+splash_screen = true
+welcome_animation = true
+profile_photo_upload = true
+real_time_chat = true
+read_receipts = true
+unread_count_badges = true
+media_attachments = true
+file_download = true
+role_based_access = true
+transactions = true
+charts = true
+i16_glassmorphism = true
+
+[roles]
+admin = { can_manage_users = true, can_view_all_messages = true, can_add_transactions = true }
+client = { can_message_admins_only = true }
+
+[database.tables]
+users = "id (uuid), name, username, phone, role, active, avatar, last_active, joined_at, created_at"
+transactions = "id, user_id, type, category, amount, from_*, account_*, notes, created_at"
+chat_tables = "id, user_id, table_name, created_at"
+per_user_chat = "user_chat_<uuid> — auto-created on user signup"
+
+[database.rpcs]
+create_user = "Inserts into public.users, trigger creates per-user chat table"
+send_message = "Inserts into both sender's and recipient's per-user chat tables"
+get_conversation = "Returns messages between two users"
+mark_read = "Marks messages as read in BOTH sender and recipient tables"
+get_read_status = "Returns the read status of the most recent message"
+
+[database.storage]
+avatars_bucket = "Public bucket for user profile pictures"
+
+[realtime.events]
+new_message = "INSERT on user_chat_<uuid> tables"
+read_receipt = "UPDATE on user_chat_<uuid> tables"
+online_status = "Polled every 30s via setUserActive + listUsers"

@@ -1,0 +1,74 @@
+# Netlify configuration for ICONNECT
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # The directory containing the built static files
+  publish = "dist"
+
+  # The command to build the site
+  command = "npm run build"
+
+[build.environment]
+  # Pin the Node version so builds are reproducible
+  NODE_VERSION = "20"
+  # Use npm
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# ---------------------------------------------------------------
+# Environment variables
+# ---------------------------------------------------------------
+# Set these in the Netlify dashboard under
+# Site settings → Environment variables.
+# The values starting with VITE_ are exposed to the client bundle.
+# ---------------------------------------------------------------
+# VITE_SUPABASE_URL = "https://<your-project>.supabase.co"
+# VITE_SUPABASE_ANON_KEY = "<your-anon-public-key>"
+
+# ---------------------------------------------------------------
+# SPA fallback — every unknown route returns index.html so the
+# React Router (if you add one later) can take over.
+# ---------------------------------------------------------------
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ---------------------------------------------------------------
+# Security headers
+# ---------------------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), microphone=(self), geolocation=()"
+
+# Long-cache hashed assets (Vite emits /assets/* with content hashes)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Don't cache index.html (always serve the latest)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ---------------------------------------------------------------
+# Optional: preview deploys for pull requests
+# ---------------------------------------------------------------
+[context.deploy-preview]
+  command = "npm run build"
+
+[context.branch-deploy]
+  command = "npm run build"
+
+# ---------------------------------------------------------------
+# Custom domain (configure in Netlify dashboard after first deploy)
+# ---------------------------------------------------------------
+# [[domains]]
+#   name = "iconnect.app"
+#   [[domains.providers]]
+#     provider = "netlify-dns"

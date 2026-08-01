@@ -1,0 +1,46 @@
+# =====================================================
+# ICONNECT — Cloudflare Pages config (OPTIONAL)
+# =====================================================
+# This file is optional when deploying via the Cloudflare
+# dashboard. It's only needed if you want to deploy via the
+# Wrangler CLI:
+#   wrangler pages deploy dist --project-name=iconnect
+#
+# Dashboard deployment (recommended):
+#   1. Push to GitHub
+#   2. Cloudflare dashboard → Pages → Create → Connect to Git
+#   3. Build command: npm run build
+#   4. Build output: dist
+#   5. Add env vars in Settings → Environment variables
+#   6. Save and Deploy
+#
+# If you DO want CLI deployment, the file looks like this:
+# =====================================================
+
+name = "iconnect"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ---------------------------------------------------------------
+# Static assets (Cloudflare Pages serves these directly)
+# ---------------------------------------------------------------
+[assets]
+directory = "./dist"
+# `binding` is only needed if you want to access assets from
+# Pages Functions / Workers. For a pure static SPA, omit it.
+# binding = "STATIC"
+
+# ---------------------------------------------------------------
+# Environment variables (set in Cloudflare dashboard)
+# ---------------------------------------------------------------
+# VITE_SUPABASE_URL = "https://<your-project>.supabase.co"
+# VITE_SUPABASE_ANON_KEY = "<your-anon-key>"
+
+# ---------------------------------------------------------------
+# Custom domains (configure in Cloudflare dashboard after deploy)
+# ---------------------------------------------------------------
+# [[routes]]
+#   pattern = "iconnect.app/*"
+#   custom_domain = true
+#   zone_name = "iconnect.app"
