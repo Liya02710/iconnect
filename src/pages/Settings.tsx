@@ -8,6 +8,7 @@ import {
 import { createPortal } from "react-dom";
 import type { User, Role } from "../types/user";
 import { api } from "../lib/api";
+import { formatRelativeTime } from "../utils/time";
 
 // In a production app, the current password would be verified against
 // the database (e.g. via supabase.auth.signInWithPassword). For now the
@@ -722,7 +723,7 @@ function UserRow({
               <span
                 style={{ color: user.active ? "#77ff33" : "rgba(255,255,255,0.4)" }}
               >
-                {user.lastActive}
+                {formatRelativeTime(user.lastActive)}
               </span>
             </>
           )}
@@ -913,8 +914,8 @@ function UserDetailModal({
               value={user.active ? "Active" : "Offline"}
               valueColor={user.active ? "#77ff33" : "rgba(255,255,255,0.5)"}
             />
-            <InfoRow label="Last active" value={user.lastActive} />
-            <InfoRow label="Joined" value={user.joined} />
+            <InfoRow label="Last active" value={formatRelativeTime(user.lastActive)} />
+            <InfoRow label="Joined" value={formatRelativeTime(user.joined)} />
           </div>
 
           {/* Action buttons */}
