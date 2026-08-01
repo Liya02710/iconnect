@@ -21,7 +21,7 @@ export default function Balance({ isAdmin = true }: { isAdmin?: boolean } = {}) 
     if (!stored) return;
     setLoading(true);
     api
-      .listTransactions(stored)
+      .listTransactions()
       .then((txs: UiTransaction[]) => {
         // Compute totals (sum all income and expenses for this user)
         const income = txs
