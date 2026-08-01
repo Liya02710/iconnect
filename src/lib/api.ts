@@ -35,7 +35,7 @@ export type UiMessage = {
   read?: boolean;
   media?: {
     url: string;
-    type: "image" | "file";
+    type: "image" | "file" | "voice";
     name?: string;
     size?: number;
   };
@@ -217,7 +217,8 @@ export const api = {
       media: m.media_url
         ? {
             url: m.media_url,
-            type: (m.media_type as "image" | "file") || "file",
+            type:
+              (m.media_type as "image" | "file" | "voice") || "file",
             name: m.media_name ?? undefined,
             size: m.media_size ?? undefined,
           }
@@ -231,7 +232,7 @@ export const api = {
     payload: {
       text: string;
       mediaUrl?: string;
-      mediaType?: "image" | "file";
+      mediaType?: "image" | "file" | "voice";
       mediaName?: string;
       mediaSize?: number;
     }
@@ -259,7 +260,8 @@ export const api = {
       media: payload.mediaUrl
         ? {
             url: payload.mediaUrl,
-            type: (payload.mediaType as "image" | "file") || "file",
+            type:
+              (payload.mediaType as "image" | "file" | "voice") || "file",
             name: payload.mediaName,
             size: payload.mediaSize,
           }
@@ -295,7 +297,9 @@ export const api = {
             media: row.media_url
               ? {
                   url: row.media_url,
-                  type: (row.media_type as "image" | "file") || "file",
+                  type:
+                    (row.media_type as "image" | "file" | "voice") ||
+                    "file",
                   name: row.media_name ?? undefined,
                   size: row.media_size ?? undefined,
                 }
