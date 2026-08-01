@@ -151,11 +151,12 @@ export const api = {
   },
 
   // ----- Transactions -----
-  async listTransactions(userId: number | string): Promise<UiTransaction[]> {
+  async listTransactions(): Promise<UiTransaction[]> {
+    // Transactions are SHARED — everyone (admin + client) can see
+    // the full history. We return all records.
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .eq("user_id", userId as string)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data as DbTransaction[]).map(dbTxToUi);
